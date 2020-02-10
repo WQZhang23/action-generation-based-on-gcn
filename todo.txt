@@ -1,0 +1,13 @@
+Mon. Data loader and processor
+      - data struction
+      - mask generation (random)
+
+Tue. Model
+      - generation model
+      - stage1,2
+      - layer [gated conv.]
+      - loss function
+
+Wen. Tur Finish
+      - args
+      - sys

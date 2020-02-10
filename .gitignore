@@ -1,0 +1,16 @@
+#custom
+tmp*
+work_dir/*
+data
+config_v0/*
+backup/*
+.vscode
+model/*
+*.pt
+*.caffemodel
+cache/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
