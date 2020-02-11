@@ -8,10 +8,25 @@ Tue. Model
       - layer [gated conv.]
       - loss function
 
-      2 gated conv. -- down conv. -- conv. -- down conv -- 2 conv. -- up conv. -- conv -- up conv. -- 2 conv.
+
+      Gen:
+      - stage1:   input (x, mask)
+                  2 conv. -- down conv. -- conv. -- down conv -- 2 conv. -- up conv. -- conv -- up conv. -- 2 conv.
+      - stage2:   input (x_pro, mask)
+                  2 conv. -- down conv. -- 2conv. -- up conv. -- 2 conv.
+
+      Dis: (not using gate conv.)
+      2 conv. -- down conv. -- 2 conv.
 
 
-Wen. Tur Finish
+      loss function
+
+
+Wen. Visulazition
+     Kinetic data set channel is 3 (x,y,confidence), in our case --> we do not generate the confidence ?
+
+
+Tur. Data augmentation in Recognition
       - args
       - sys
 
