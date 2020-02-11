@@ -8,6 +8,9 @@ Tue. Model
       - layer [gated conv.]
       - loss function
 
+      2 gated conv. -- down conv. -- conv. -- down conv -- 2 conv. -- up conv. -- conv -- up conv. -- 2 conv.
+
+
 Wen. Tur Finish
       - args
       - sys

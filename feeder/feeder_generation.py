@@ -89,4 +89,6 @@ class Feeder(torch.utils.data.Dataset):
         data_mask = tools.random_mask(data_numpy, self.start_portion, self.mask_size, self.window_size)
         data_incom = data_numpy*(1-data_mask)
 
-        return data_numpy, label
+        # return a list
+
+        return [data_numpy, data_mask], label

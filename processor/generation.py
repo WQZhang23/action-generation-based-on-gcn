@@ -81,14 +81,18 @@ class GEN_Processor(Processor):
         loader = self.data_loader['train']
         loss_value = []
 
-        for data, label in loader:
+        for data_list, label in loader:
 
             # get data
+            data = data_list[0]
+            data_mask = data_list[1]
+
             data = data.float().to(self.dev)
+            data_mask = data_mask.int().to(self.dev)
             label = label.long().to(self.dev)
 
             # forward
-            output = self.model(data)
+            output = self.model(data, data_mask)
             loss = self.loss(output, label)
 
             # backward
@@ -117,15 +121,19 @@ class GEN_Processor(Processor):
         result_frag = []
         label_frag = []
 
-        for data, label in loader:
+        for data_list, label in loader:
             
             # get data
+            data = data_list[0]
+            data_mask = data_list[1]
+
             data = data.float().to(self.dev)
+            data_mask = data_mask.int().to(self.dev)
             label = label.long().to(self.dev)
 
             # inference
             with torch.no_grad():
-                output = self.model(data)
+                output = self.model(data, data_mask)
             result_frag.append(output.data.cpu().numpy())
 
             # get loss

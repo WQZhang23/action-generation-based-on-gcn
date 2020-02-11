@@ -6,6 +6,8 @@ from torch.autograd import Variable
 from net.utils.tgcn import ConvTemporalGraphical
 from net.utils.graph import Graph
 
+import pdb
+
 class Generator(nn.Module):
 
     def __init__(self, in_channels, num_class, graph_args,
@@ -74,7 +76,7 @@ class Model(nn.Module):
         # fcn for prediction
         self.fcn = nn.Conv2d(256, num_class, kernel_size=1)
 
-    def forward(self, x):
+    def forward(self, x, mask):
 
         # data normalization
         N, C, T, V, M = x.size()
@@ -83,11 +85,31 @@ class Model(nn.Module):
         x = self.data_bn(x)
         x = x.view(N, M, V, C, T)
         x = x.permute(0, 1, 3, 4, 2).contiguous()
-        x = x.view(N * M, C, T, V)
+        x_pos = x.view(N * M, C, T, V)
+
+        # here x is original input data
+        # use y and mask to config the input data for the model
+        y = torch.ones_like(x_pos)[:,0:1,:,:]
+
+
+        N_m, C_m, T_m, V_m, M_m = mask.size()
+        mask = mask.view(N_m * M_m, C_m, T_m, V_m)
+
+        x = torch.cat((x_pos,y,mask),1)
 
         # forwad
         for gcn, importance in zip(self.st_gcn_networks, self.edge_importance):
             x, _ = gcn(x, self.A * importance)
+
+
+        # gen_conv
+
+
+        # gen_dconv
+
+
+        # dic
+
 
         # global pooling
         x = F.avg_pool2d(x, x.size()[2:])
@@ -203,3 +225,136 @@ class st_gcn(nn.Module):
         x = self.tcn(x) + res
 
         return self.relu(x), A
+
+
+class st_gen_conv(nn.Module):
+    def __init__(self,
+                 in_channels,
+                 out_channels,
+                 kernel_size,
+                 stride=1,
+                 dropout=0,
+                 residual=True):
+        super().__init__()
+
+        assert len(kernel_size) == 2
+        assert kernel_size[0] % 2 == 1
+        padding = ((kernel_size[0] - 1) // 2, 0)
+
+        self.gcn = ConvTemporalGraphical(in_channels, out_channels,
+                                         kernel_size[1])
+
+        self.tcn = nn.Sequential(
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(
+                out_channels,
+                out_channels,
+                (kernel_size[0], 1),
+                (stride, 1),
+                padding,
+            ),
+            nn.BatchNorm2d(out_channels),
+            nn.Dropout(dropout, inplace=True),
+        )
+
+        if not residual:
+            self.residual = lambda x: 0
+
+        elif (in_channels == out_channels) and (stride == 1):
+            self.residual = lambda x: x
+
+        else:
+            self.residual = nn.Sequential(
+                nn.Conv2d(
+                    in_channels,
+                    out_channels,
+                    kernel_size=1,
+                    stride=(stride, 1)),
+                nn.BatchNorm2d(out_channels),
+            )
+
+        self.relu = nn.ReLU(inplace=True)
+
+    def forward(self, x, A):
+
+        # x_incom = x * (1-mask)
+        # mask = nn.Sigmoid(mask)
+
+        res = self.residual(x)
+        x, A = self.gcn(x, A)
+        x = self.tcn(x) + res
+
+        x, y = torch.split(x, 2, 1)
+        x = self.relu(x)
+        y = nn.Sigmoid(y)
+        x = x * y
+
+        return x, A
+
+
+class st_gen_deconv(nn.Module):
+    def __init__(self,
+                 in_channels,
+                 out_channels,
+                 kernel_size,
+                 stride=1,
+                 dropout=0,
+                 residual=True):
+        super().__init__()
+
+        assert len(kernel_size) == 2
+        assert kernel_size[0] % 2 == 1
+        padding = ((kernel_size[0] - 1) // 2, 0)
+
+        self.gcn = ConvTemporalGraphical(in_channels, out_channels,
+                                         kernel_size[1])
+
+        self.tcn = nn.Sequential(
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(
+                out_channels,
+                out_channels,
+                (kernel_size[0], 1),
+                (stride, 1),
+                padding,
+            ),
+            nn.BatchNorm2d(out_channels),
+            nn.Dropout(dropout, inplace=True),
+        )
+
+        if not residual:
+            self.residual = lambda x: 0
+
+        elif (in_channels == out_channels) and (stride == 1):
+            self.residual = lambda x: x
+
+        else:
+            self.residual = nn.Sequential(
+                nn.Conv2d(
+                    in_channels,
+                    out_channels,
+                    kernel_size=1,
+                    stride=(stride, 1)),
+                nn.BatchNorm2d(out_channels),
+            )
+
+        self.relu = nn.ReLU(inplace=True)
+
+    def forward(self, x, A):
+
+        a,b,T,d = x.size()
+        upsample = nn.Upsample(size=(2*T,d), mode='nearest')
+        x = upsample(x)
+
+        res = self.residual(x)
+        x, A = self.gcn(x, A)
+        x = self.tcn(x) + res
+
+        x, y = torch.split(x, 2, 1)
+        x = self.relu(x)
+        y = nn.Sigmoid(y)
+        x = x * y
+
+        return x, A
