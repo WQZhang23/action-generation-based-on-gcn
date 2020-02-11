@@ -53,6 +53,20 @@ def random_choose(data_numpy, size, auto_pad=True):
         begin = random.randint(0, T - size)
         return data_numpy[:, begin:begin + size, :, :]
 
+def random_mask(data_numpy, start_portion, mask_size, window_size):
+    # input: C,T,V,M
+    C, T, V, M = data_numpy.shape
+    random_start = int(T*start_portion)
+    random_end = (window_size-mask_size)
+    assert random_start < random_end
+    begin = random.ranint(random_start, random_end)
+    mask = np.zeros((1,T,1,1), np.float32)
+    mask[:, begin:begin+mask_size, :, :] = 1
+    # mask = 1 --> middle part that will be removed
+    # mask = 0 --> begin and end part that will be remain
+    # data_incom = data_numpy*(1-mask)
+    return mask
+
 
 def random_move(data_numpy,
                 angle_candidate=[-10., -5., 0., 5., 10.],

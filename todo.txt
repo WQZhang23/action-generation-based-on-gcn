@@ -11,3 +11,22 @@ Tue. Model
 Wen. Tur Finish
       - args
       - sys
+
+
+
+
+~ - feeder/feeder_generation.py
+
+- config/st_gcn/kinetics-skeleton/generation_train.yaml
+- processor/generation.py
+- net/graph_gen.py
+
+
+paper writing
+- data augmentation
+  - assumption []
+  - 
+
+- network
+  - graph process the spatial and temporal data
+  - gate conv. layer

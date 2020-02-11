@@ -32,9 +32,9 @@ def weights_init(m):
         m.weight.data.normal_(1.0, 0.02)
         m.bias.data.fill_(0)
 
-class REC_Processor(Processor):
+class GEN_Processor(Processor):
     """
-        Processor for Skeleton-based Action Recgnition
+        Processor for Graph data generation
     """
 
     def load_model(self):
@@ -106,6 +106,8 @@ class REC_Processor(Processor):
         self.epoch_info['mean_loss']= np.mean(loss_value)
         self.show_epoch_info()
         self.io.print_timer()
+
+
 
     def test(self, evaluation=True):
 
