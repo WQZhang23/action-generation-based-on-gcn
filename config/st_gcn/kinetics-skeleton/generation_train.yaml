@@ -7,17 +7,26 @@ train_feeder_args:
   random_move: False
   mask_size: 10
   window_size: 150 
-  data_path: ./data/Kinetics/kinetics-skeleton/train_data.npy
-  label_path: ./data/Kinetics/kinetics-skeleton/train_label.pkl
+  data_path: /home/wuqiang/Workspace/2_generative_model/3_DA_Gesture/2_ST_GCN/st-gcn-master/data/Kinetics/kinetics-skeleton/train_data.npy
+  label_path: /home/wuqiang/Workspace/2_generative_model/3_DA_Gesture/2_ST_GCN/st-gcn-master/data/Kinetics/kinetics-skeleton/train_label.pkl
   debug: True
 test_feeder_args:
-  data_path: ./data/Kinetics/kinetics-skeleton/val_data.npy
-  label_path: ./data/Kinetics/kinetics-skeleton/val_label.pkl
+  data_path: /home/wuqiang/Workspace/2_generative_model/3_DA_Gesture/2_ST_GCN/st-gcn-master/data/Kinetics/kinetics-skeleton/val_data.npy
+  label_path: /home/wuqiang/Workspace/2_generative_model/3_DA_Gesture/2_ST_GCN/st-gcn-master/data/Kinetics/kinetics-skeleton/val_label.pkl
   debug: True
 
 # model
-model: net.graph_gen.Model
-model_args:
+generator: net.graph_gen.Generator
+gen_args:
+  in_channels: 3
+  num_class: 400
+  edge_importance_weighting: True
+  graph_args:
+    layout: 'openpose'
+    strategy: 'spatial'
+
+discriminator: net.graph_gen.Discriminator
+dis_args:
   in_channels: 3
   num_class: 400
   edge_importance_weighting: True
@@ -28,8 +37,8 @@ model_args:
 # training
 # original batch_size = 256
 device: [0]
-batch_size: 256
-test_batch_size: 256
+batch_size: 16
+test_batch_size: 16
 
 #optim
 base_lr: 0.1

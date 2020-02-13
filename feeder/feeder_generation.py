@@ -12,6 +12,8 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torchvision import datasets, transforms
 
+import pdb
+
 # visualization
 import time
 
@@ -48,7 +50,6 @@ class Feeder(torch.utils.data.Dataset):
         self.mask_size = mask_size
         self.start_portion = start_portion
         self.window_size = window_size
-
         self.load_data(mmap)
 
     def load_data(self, mmap):
@@ -71,6 +72,7 @@ class Feeder(torch.utils.data.Dataset):
 
         self.N, self.C, self.T, self.V, self.M = self.data.shape
 
+
     def __len__(self):
         return len(self.label)
 
@@ -88,7 +90,8 @@ class Feeder(torch.utils.data.Dataset):
             data_numpy = tools.random_move(data_numpy)
         data_mask = tools.random_mask(data_numpy, self.start_portion, self.mask_size, self.window_size)
         data_incom = data_numpy*(1-data_mask)
+        data_list = [data_numpy, data_mask]
 
         # return a list
 
-        return [data_numpy, data_mask], label
+        return data_list, label

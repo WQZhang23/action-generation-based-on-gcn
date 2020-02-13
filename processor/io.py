@@ -15,6 +15,7 @@ from torchlight import str2bool
 from torchlight import DictAction
 from torchlight import import_class
 
+import pdb
 class IO():
     """
         IO Processor
@@ -41,6 +42,7 @@ class IO():
             # update parser from config file
             key = vars(p).keys()
             for k in default_arg.keys():
+                # pdb.set_trace()
                 if k not in key:
                     print('Unknown Arguments: {}'.format(k))
                     assert k in key
@@ -68,6 +70,8 @@ class IO():
     def load_model(self):
         self.model = self.io.load_model(self.arg.model,
                                         **(self.arg.model_args))
+        self.generator = self.io.load_model(self.arg.generator, **(self.arg.gen_args))
+        self.discriminator = self.io.load_model(self.arg.discriminator, **(self.arg.dis_args))
 
     def load_weights(self):
         if self.arg.weights:
@@ -76,7 +80,9 @@ class IO():
 
     def gpu(self):
         # move modules to gpu
-        self.model = self.model.to(self.dev)
+        #self.model = self.model.to(self.dev)
+        self.generator = self.generator.to(self.dev)
+        self.discriminator = self.discriminator.to(self.dev)
         for name, value in vars(self).items():
             cls_name = str(value.__class__)
             if cls_name.find('torch.nn.modules') != -1:
@@ -84,7 +90,9 @@ class IO():
 
         # model parallel
         if self.arg.use_gpu and len(self.gpus) > 1:
-            self.model = nn.DataParallel(self.model, device_ids=self.gpus)
+            #self.model = nn.DataParallel(self.model, device_ids=self.gpus)
+            self.generator = nn.DataParallel(self.generator, device_ids=self.gpus)
+            self.discriminator = nn.DataParallel(self.discriminator, device_ids=self.gpus)
 
     def start(self):
         self.io.print_log('Parameters:\n{}\n'.format(str(vars(self.arg))))
@@ -110,6 +118,7 @@ class IO():
         # model
         parser.add_argument('--model', default=None, help='the model will be used')
         parser.add_argument('--model_args', action=DictAction, default=dict(), help='the arguments of model')
+
         parser.add_argument('--weights', default=None, help='the weights for network initialization')
         parser.add_argument('--ignore_weights', type=str, default=[], nargs='+', help='the name of weights which will be ignored in the initialization')
         #endregion yapf: enable

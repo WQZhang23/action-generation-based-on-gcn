@@ -59,8 +59,8 @@ def random_mask(data_numpy, start_portion, mask_size, window_size):
     random_start = int(T*start_portion)
     random_end = (window_size-mask_size)
     assert random_start < random_end
-    begin = random.ranint(random_start, random_end)
-    mask = np.zeros((1,T,1,1), np.float32)
+    begin = random.randint(random_start, random_end)
+    mask = np.zeros((1,T,V,M), np.float32)
     mask[:, begin:begin+mask_size, :, :] = 1
     # mask = 1 --> middle part that will be removed
     # mask = 0 --> begin and end part that will be remain

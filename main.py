@@ -12,7 +12,8 @@ if __name__ == '__main__':
 
     # region register processor yapf: disable
     processors = dict()
-    processors['recognition'] = import_class('processor.recognition.REC_Processor')
+    #processors['recognition'] = import_class('processor.recognition.REC_Processor')
+    processors['generation'] =import_class('processor.generation.GEN_Processor')
 
 
     # add sub-parser

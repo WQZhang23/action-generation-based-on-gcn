@@ -17,6 +17,7 @@ from torchlight import DictAction
 from torchlight import import_class
 
 from .processor import Processor
+import pdb
 
 def weights_init(m):
     classname = m.__class__.__name__
@@ -38,19 +39,34 @@ class GEN_Processor(Processor):
     """
 
     def load_model(self):
-        self.model = self.io.load_model(self.arg.model,
-                                        **(self.arg.model_args))
-        self.model.apply(weights_init)
-        self.loss = nn.CrossEntropyLoss()
+        self.generator = self.io.load_model(self.arg.generator,
+                                        **(self.arg.gen_args))
+        self.discriminator = self.io.load_model(self.arg.discriminator,
+                                        **(self.arg.dis_args))
+        self.generator.apply(weights_init)
+        self.discriminator.apply(weights_init)
+
+
+        self.l1_loss = nn.L1Loss()
+        self.sml1_loss = nn.SmoothL1Loss()
+        self.ce_loss = nn.CrossEntropyLoss()
         
     def load_optimizer(self):
         if self.arg.optimizer == 'SGD':
-            self.optimizer = optim.SGD(
-                self.model.parameters(),
+            self.optimizer_gen = optim.SGD(
+                self.generator.parameters(),
                 lr=self.arg.base_lr,
                 momentum=0.9,
                 nesterov=self.arg.nesterov,
                 weight_decay=self.arg.weight_decay)
+
+            self.optimizer_dis = optim.SGD(
+                self.discriminator.parameters(),
+                lr=self.arg.base_lr,
+                momentum=0.9,
+                nesterov=self.arg.nesterov,
+                weight_decay=self.arg.weight_decay)
+
         elif self.arg.optimizer == 'Adam':
             self.optimizer = optim.Adam(
                 self.model.parameters(),
@@ -63,8 +79,9 @@ class GEN_Processor(Processor):
         if self.arg.optimizer == 'SGD' and self.arg.step:
             lr = self.arg.base_lr * (
                 0.1**np.sum(self.meta_info['epoch']>= np.array(self.arg.step)))
-            for param_group in self.optimizer.param_groups:
-                param_group['lr'] = lr
+            for param_group_gen, param_group_dis in zip(self.optimizer_gen.param_groups, self.optimizer_dis.param_groups):
+                param_group_gen['lr'] = lr
+                param_group_dis['lr'] = lr
             self.lr = lr
         else:
             self.lr = self.arg.base_lr
@@ -76,40 +93,80 @@ class GEN_Processor(Processor):
         self.io.print_log('\tTop{}: {:.2f}%'.format(k, 100 * accuracy))
 
     def train(self):
-        self.model.train()
+        self.generator.train()
+        self.discriminator.train()
         self.adjust_lr()
         loader = self.data_loader['train']
-        loss_value = []
+        g_loss_value = []
+        d_loss_value = []
 
         for data_list, label in loader:
-
             # get data
             data = data_list[0]
             data_mask = data_list[1]
 
             data = data.float().to(self.dev)
-            data_mask = data_mask.int().to(self.dev)
+            data_mask = data_mask.float().to(self.dev)
             label = label.long().to(self.dev)
 
-            # forward
-            output = self.model(data, data_mask)
-            loss = self.loss(output, label)
+            # generator forward
+            x_stage1, x_stage2 = self.generator(data, data_mask)
+            gen_recon_loss = self.l1_loss(data, x_stage1) + self.l1_loss(data, x_stage2)
 
-            # backward
-            self.optimizer.zero_grad()
-            loss.backward()
-            self.optimizer.step()
+            # discriminator forward
+            x_com = x_stage2*data_mask + data*(1-data_mask)
+            input_pos_neg = torch.cat((data, x_com), 0)
+            dis_pos_neg = self.discriminator(input_pos_neg)
+            dis_pos, dis_neg = torch.split(dis_pos_neg, 2, 0)
 
-            # statistics
-            self.iter_info['loss'] = loss.data.item()
-            self.iter_info['lr'] = '{:.6f}'.format(self.lr)
-            loss_value.append(self.iter_info['loss'])
-            self.show_iter_info()
-            self.meta_info['iter'] += 1
+            #  gan loss
+            # https://github.com/JiahuiYu/neuralgym/blob/master/neuralgym/ops/gan_ops.py
+            # https://github.com/ozanciga/gans-with-pytorch/blob/master/wgan/wgan.py
+            label_size = dis_pos.size()
+            label_size[1:] = 1
 
-        self.epoch_info['mean_loss']= np.mean(loss_value)
-        self.show_epoch_info()
-        self.io.print_timer()
+            neg = np.zeros(label_size, np.int)
+            pos = neg + 1
+
+            pdb.set_trace()
+
+
+
+    # def train(self):
+    #     self.model.train()
+    #     self.adjust_lr()
+    #     loader = self.data_loader['train']
+    #     loss_value = []
+    #
+    #     for data_list, label in loader:
+    #
+    #         # get data
+    #         data = data_list[0]
+    #         data_mask = data_list[1]
+    #
+    #         data = data.float().to(self.dev)
+    #         data_mask = data_mask.int().to(self.dev)
+    #         label = label.long().to(self.dev)
+    #
+    #         # forward
+    #         output = self.model(data, data_mask)
+    #         loss = self.loss(output, label)
+    #
+    #         # backward
+    #         self.optimizer.zero_grad()
+    #         loss.backward()
+    #         self.optimizer.step()
+    #
+    #         # statistics
+    #         self.iter_info['loss'] = loss.data.item()
+    #         self.iter_info['lr'] = '{:.6f}'.format(self.lr)
+    #         loss_value.append(self.iter_info['loss'])
+    #         self.show_iter_info()
+    #         self.meta_info['iter'] += 1
+    #
+    #     self.epoch_info['mean_loss']= np.mean(loss_value)
+    #     self.show_epoch_info()
+    #     self.io.print_timer()
 
 
 

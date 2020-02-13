@@ -19,19 +19,24 @@ Tue. Model
       2 conv. -- down conv. -- 2 conv.
 
 
-      loss function
 
 
-Wen. Visulazition
-     Kinetic data set channel is 3 (x,y,confidence), in our case --> we do not generate the confidence ?
+
+Wen. 1. loss function [generation.py]
+        model and training config --> [generation_train.yaml]
+     2. Visulazition
+     3. Kinetic data set channel is 3 (x,y,confidence), in our case --> we do not generate the confidence ?
 
 
 Tur. Data augmentation in Recognition
+     [load weight]
+     [generation.py --> test()]
       - args
       - sys
+      [on/off gate layer]
 
-
-
+      - learning rate [generation.py --> adjust_lr() , now: gen and dis lr change sim.tly]
+      - loss function of GAN [generation.py --> train(), #gan loss ... , now:]
 
 ~ - feeder/feeder_generation.py
 
@@ -39,6 +44,8 @@ Tur. Data augmentation in Recognition
 - processor/generation.py
 - net/graph_gen.py
 
+
+python main.py generation -c config/st_gcn/kinetics-skeleton/generation_train.yaml
 
 paper writing
 - data augmentation

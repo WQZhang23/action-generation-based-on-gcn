@@ -28,7 +28,7 @@ class Generator(nn.Module):
 
 
         self.gen_stage1 = nn.ModuleList((
-            st_gen_conv(in_channels, 64, kernel_size, 1, residual=False, **kwargs0),
+            st_gen_conv(in_channels+2, 64, kernel_size, 1, residual=False, **kwargs0),
             st_gen_conv(64, 64, kernel_size, 1, **kwargs),
             st_gen_conv(64, 128, kernel_size, 2, **kwargs),
             st_gen_conv(128, 128, kernel_size, 1, **kwargs),
@@ -79,28 +79,29 @@ class Generator(nn.Module):
         x = self.data_bn(x)
         x = x.view(N, M, V, C, T)
         x = x.permute(0, 1, 3, 4, 2).contiguous()
-        x_pos = x.view(N * M, C, T, V)
+        x_pos = x.view(N * M, C, T, V).to(float)
 
         x_ori = x_pos
 
         # here x is original input data
         # use y and mask to config the input data for the model
-        y = torch.ones_like(x_pos)[:, 0:1, :, :]
+        y = torch.ones_like(x_pos)[:, 0:1, :, :].to(float)
 
         N_m, C_m, T_m, V_m, M_m = mask.size()
-        mask = mask.view(N_m * M_m, C_m, T_m, V_m)
+        mask = mask.view(N_m * M_m, C_m, T_m, V_m).to(float)
 
-        x = torch.cat((x_pos, y, mask), 1)
+        x = torch.cat((x_pos, y, mask), 1).type(torch.FloatTensor).cuda()
+        #x = torch.cat((x_pos, mask), 1).type(torch.FloatTensor).cuda()
 
         # stage 1 forward
         for gcn, importance in zip(self.gen_stage1, self.edge_importance_stage1):
+            pdb.set_trace()
             x, _ = gcn(x, self.A * importance)
         x_stage1 = nn.Tanh(x)
 
 
         # stage 2 forward
         x = x_stage1*mask + x_ori*(1-mask)
-        pdb.set_trace()
         for gcn, importance in zip(self.gen_stage2, self.edge_importance_stage2):
             x, _ = gcn(x, self.A * importance)
 
@@ -421,31 +422,37 @@ class st_gen_conv(nn.Module):
             self.residual = nn.Sequential(
                 nn.Conv2d(
                     in_channels,
-                    out_channels,
+                    2*out_channels,
                     kernel_size=1,
                     stride=(stride, 1)),
                 nn.BatchNorm2d(out_channels),
             )
 
         self.relu = nn.ReLU(inplace=True)
+        self.sig = nn.Sigmoid()
 
     def forward(self, x, A):
 
         # x_incom = x * (1-mask)
         # mask = nn.Sigmoid(mask)
 
-        a,b,T,N = x.size()
-
         res = self.residual(x)
         x, A = self.gcn(x, A)
         x = self.tcn(x) + res
+        a, b_size, T, N = x.size()
 
-        if b == 3:
+        if b_size == 3:
             return x, A
 
-        x, y = torch.split(x, 2, 1)
-        x = self.relu(x)
-        y = nn.Sigmoid(y)
+        pdb.set_trace()
+        sp_id = b_size//2
+        part1 = x[:,:sp_id,:,:]
+        part2 = x[:,sp_id:,:,:]
+        #part1, part2 = torch.split(x, (b_size//2), dim=1)
+        pdb.set_trace()
+        x = self.relu(part1)
+        y = self.sig(part2)
+
         x = x * y
 
         return x, A
@@ -515,6 +522,7 @@ class st_gen_deconv(nn.Module):
         x, y = torch.split(x, 2, 1)
         x = self.relu(x)
         y = nn.Sigmoid(y)
+
         x = x * y
 
         return x, A
