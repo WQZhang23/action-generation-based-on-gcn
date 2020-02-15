@@ -28,6 +28,11 @@ Wen. 1. loss function [generation.py]
      3. Kinetic data set channel is 3 (x,y,confidence), in our case --> we do not generate the confidence ?
 
 
+further setting
+- Kinetic data set channel is 3 (x,y,confidence)/ 2 (x,y)
+- discriminator final activation layer [now-->self.fcn, but without sigmoid?] + loss function
+- gate layer [on/off] [input channel+1 / channel+2] [laster channel as y or other option]
+
 Tur. Data augmentation in Recognition
      [load weight]
      [generation.py --> test()]
@@ -45,7 +50,6 @@ Tur. Data augmentation in Recognition
 - net/graph_gen.py
 
 
-python main.py generation -c config/st_gcn/kinetics-skeleton/generation_train.yaml
 
 paper writing
 - data augmentation
@@ -55,3 +59,5 @@ paper writing
 - network
   - graph process the spatial and temporal data
   - gate conv. layer
+
+python main.py generation -c config/st_gcn/kinetics-skeleton/generation_train.yaml

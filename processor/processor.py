@@ -116,15 +116,15 @@ class Processor(IO):
                 # save model
                 if ((epoch + 1) % self.arg.save_interval == 0) or (
                         epoch + 1 == self.arg.num_epoch):
-                    filename = 'epoch{}_model.pt'.format(epoch + 1)
-                    self.io.save_model(self.model, filename)
+                    filename = 'epoch{}_generator.pt'.format(epoch + 1)
+                    self.io.save_model(self.generator, filename)
 
                 # evaluation
-                if ((epoch + 1) % self.arg.eval_interval == 0) or (
-                        epoch + 1 == self.arg.num_epoch):
-                    self.io.print_log('Eval epoch: {}'.format(epoch))
-                    self.test()
-                    self.io.print_log('Done.')
+                # if ((epoch + 1) % self.arg.eval_interval == 0) or (
+                #         epoch + 1 == self.arg.num_epoch):
+                #     self.io.print_log('Eval epoch: {}'.format(epoch))
+                #     self.test()
+                #     self.io.print_log('Done.')
         # test phase
         elif self.arg.phase == 'test':
 

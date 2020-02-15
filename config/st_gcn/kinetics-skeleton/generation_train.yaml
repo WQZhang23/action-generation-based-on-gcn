@@ -5,7 +5,7 @@ feeder: feeder.feeder_generation.Feeder
 train_feeder_args:
   random_choose: False
   random_move: False
-  mask_size: 10
+  mask_size: 5
   window_size: 150 
   data_path: /home/wuqiang/Workspace/2_generative_model/3_DA_Gesture/2_ST_GCN/st-gcn-master/data/Kinetics/kinetics-skeleton/train_data.npy
   label_path: /home/wuqiang/Workspace/2_generative_model/3_DA_Gesture/2_ST_GCN/st-gcn-master/data/Kinetics/kinetics-skeleton/train_label.pkl
@@ -37,11 +37,12 @@ dis_args:
 # training
 # original batch_size = 256
 device: [0]
-batch_size: 16
-test_batch_size: 16
+batch_size: 1
+test_batch_size: 1
 
 #optim
 base_lr: 0.1
+optimizer: 'Adam'
 step: [20, 30, 40, 50]
 num_epoch: 50
 

@@ -18,6 +18,7 @@ from torchlight import import_class
 
 from .processor import Processor
 import pdb
+import time
 
 def weights_init(m):
     classname = m.__class__.__name__
@@ -50,6 +51,17 @@ class GEN_Processor(Processor):
         self.l1_loss = nn.L1Loss()
         self.sml1_loss = nn.SmoothL1Loss()
         self.ce_loss = nn.CrossEntropyLoss()
+
+    # definition of the gan loss
+    # https://github.com/JiahuiYu/neuralgym/blob/master/neuralgym/ops/gan_ops.py
+    # https://github.com/ozanciga/gans-with-pytorch
+    def gan_hinge_loss(self, pos, neg):
+        self.relu = nn.ReLU()
+        hinge_pos = self.relu(1-pos).mean()
+        hinge_neg = self.relu(1+neg).mean()
+        d_loss = .5*hinge_pos + .5*hinge_neg
+        g_loss = -neg.mean()
+        return g_loss, d_loss
         
     def load_optimizer(self):
         if self.arg.optimizer == 'SGD':
@@ -68,8 +80,13 @@ class GEN_Processor(Processor):
                 weight_decay=self.arg.weight_decay)
 
         elif self.arg.optimizer == 'Adam':
-            self.optimizer = optim.Adam(
-                self.model.parameters(),
+            self.optimizer_gen = optim.Adam(
+                self.generator.parameters(),
+                lr=self.arg.base_lr,
+                weight_decay=self.arg.weight_decay)
+
+            self.optimizer_dis = optim.Adam(
+                self.discriminator.parameters(),
                 lr=self.arg.base_lr,
                 weight_decay=self.arg.weight_decay)
         else:
@@ -100,6 +117,7 @@ class GEN_Processor(Processor):
         g_loss_value = []
         d_loss_value = []
 
+
         for data_list, label in loader:
             # get data
             data = data_list[0]
@@ -117,18 +135,39 @@ class GEN_Processor(Processor):
             x_com = x_stage2*data_mask + data*(1-data_mask)
             input_pos_neg = torch.cat((data, x_com), 0)
             dis_pos_neg = self.discriminator(input_pos_neg)
-            dis_pos, dis_neg = torch.split(dis_pos_neg, 2, 0)
 
-            #  gan loss
-            # https://github.com/JiahuiYu/neuralgym/blob/master/neuralgym/ops/gan_ops.py
-            # https://github.com/ozanciga/gans-with-pytorch/blob/master/wgan/wgan.py
-            label_size = dis_pos.size()
-            label_size[1:] = 1
+            #dis_pos, dis_neg = torch.split(dis_pos_neg, 2, 0)
 
-            neg = np.zeros(label_size, np.int)
-            pos = neg + 1
+            dis_pos = dis_pos_neg[:,0]
+            dis_neg = dis_pos_neg[:,1]
 
-            pdb.set_trace()
+            g_gan_loss, d_gan_loss = self.gan_hinge_loss(dis_pos, dis_neg)
+            g_loss_sum = self.arg.recon_loss_weight*gen_recon_loss + g_gan_loss
+            d_loss_sum = d_gan_loss
+
+            # backward_dis
+            self.optimizer_dis.zero_grad()
+            d_loss_sum.backward(retain_graph=True)
+            self.optimizer_dis.step()
+
+            # backward_gen
+            self.optimizer_gen.zero_grad()
+            g_loss_sum.backward()
+            self.optimizer_gen.step()
+
+            # statistics
+            self.iter_info['g_loss'] = g_loss_sum.data.item()
+            self.iter_info['d_loss'] = d_loss_sum.data.item()
+            self.iter_info['lr'] = '{:.6f}'.format(self.lr)
+            g_loss_value.append(self.iter_info['g_loss'])
+            d_loss_value.append(self.iter_info['d_loss'])
+            self.show_iter_info()
+            self.meta_info['iter'] += 1
+
+        self.epoch_info['mean_g_loss'] = np.mean(g_loss_value)
+        self.epoch_info['mean_d_loss'] = np.mean(d_loss_value)
+        self.show_epoch_info()
+        #self.io.print_timer()
 
 
 
@@ -228,6 +267,7 @@ class GEN_Processor(Processor):
         parser.add_argument('--optimizer', default='SGD', help='type of optimizer')
         parser.add_argument('--nesterov', type=str2bool, default=True, help='use nesterov or not')
         parser.add_argument('--weight_decay', type=float, default=0.0001, help='weight decay for optimizer')
+        parser.add_argument('--recon_loss_weight', type=int, default=1, help='lambda for reconstuction loss')
         # endregion yapf: enable
 
         return parser
