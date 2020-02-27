@@ -2,67 +2,78 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2
 import pdb
+import argparse
+import os
+import shutil
 
-#data_path = '/home/wuqiang/Workspace/2_generative_model/3_DA_Gesture/2_ST_GCN/st-gcn-master/data/NTU-RGB-D/xsub/val_data.npy'
-data_path = '/home/wuqiang/Workspace/2_generative_model/3_DA_Gesture/2_ST_GCN/st-gcn-master/data/Kinetics/kinetics-skeleton/val_data.npy'
-# for pose data format -->
-# https://github.com/kevinlin311tw/keras-openpose-reproduce/blob/master/inference/prediction.py
+# finish the ntu
+def getArgs():
+    parse = argparse.ArgumentParser()
+    parse.add_argument('--data_path', type=str, help='the input data', default='//home/wuqiang/Workspace/2_generative_model/3_DA_Gesture/2_ST_GCN/st-gcn-master/data/NTU-RGB-D/xsub/val_data.npy')
+    parse.add_argument('--data_layout', type=str, help='openpose, ntu-rgb+d, ntu_edge', default='openpose')
+    parse.add_argument('--out_path', type=str, help='the path where the result will be saved', default='./videos/')
+    args = parse.parse_args()
+    return vars(args)
 
-# find connection in the specified sequence, center 29 is in the position 15
-limbSeq = [[2, 3], [2, 6], [3, 4], [4, 5], [6, 7], [7, 8], [2, 9], [9, 10], \
-           [10, 11], [2, 12], [12, 13], [13, 14], [2, 1], [1, 15], [15, 17], \
-           [1, 16], [16, 18], [3, 17], [6, 18]]
+'''
+basic setting
+including 1) the connection of open pose --> /net/utils/graph.py
+          2) color for visualization
+          3) image size
+'''
 
-# visualize
-colors = [[255, 0, 0], [255, 85, 0], [255, 170, 0], [255, 255, 0], [170, 255, 0], [85, 255, 0],
-          [0, 255, 0], \
-          [0, 255, 85], [0, 255, 170], [0, 255, 255], [0, 170, 255], [0, 85, 255], [0, 0, 255],
-          [85, 0, 255], \
-          [170, 0, 255], [255, 0, 255], [255, 0, 170], [255, 0, 85]]
 
-data = np.load(data_path, mmap_mode='r')
-#data = np.load(data_path)
-N, C, T, V, M = data.shape
-# in the first version --> N=0 [first data idex], M=0 [first person id], C=0,1 [x and y, not confidence]
-demo_item = data[17,:2,:,:,0]
-C, T, V = demo_item.shape
+''' data loader '''
+def data_loader(data_path, data_id):
+    data = np.load(data_path, mmap_mode='r')
 
-# frame visu
-height = 256
-width = 340
+    # N=0 [data index], M=0 [person id], C=0,1 [x and y, not confidence]
+    # N, C, T, V, M = data.shape
+    demo_item = data[data_id,:,:,:,:]
+    return demo_item
 
-def frame_visu(frame_item):
-    out = np.zeros((height,width,3), np.uint8)
-    for k in range(16):
-        A_idx = limbSeq[k][0] - 1
-        B_idx = limbSeq[k][1] - 1
-        A_cor = frame_item[:, A_idx]
-        B_cor = frame_item[:, B_idx]
-        A_x = int((frame_item[0, A_idx] + 0.5) * 340)
-        A_y = int((frame_item[1, A_idx] + 0.5) * 256)
-        B_x = int((frame_item[0, B_idx] + 0.5) * 340)
-        B_y = int((frame_item[1, B_idx] + 0.5) * 256)
-        A = (int(A_x), int(A_y))
-        B = (int(B_x), int(B_y))
 
-        out = cv2.line(out,A,B,colors[k],1)
-    return out
+'''visualization for each frame'''
+def data_visu(data_item, frame_id, out_path):
+    C, T, V, M = data_item.shape
+    #print(data_item.shape)
+    connecting_joint = np.array(
+        [2, 1, 21, 3, 21, 5, 6, 7, 21, 9, 10, 11, 1, 13, 14, 15, 1, 17, 18, 19, 2, 8, 8, 12, 12]) - 1
+    location = data_item[:, frame_id,:,:]
 
-folder_path = '/home/wuqiang/Workspace/2_generative_model/3_DA_Gesture/3_Aug/generation/tools/videos/'
+    plt.figure()
+    plt.cla()
+    plt.xlim(-1000, 2000)
+    plt.ylim(-2000, 2000)
+    for m in range(M):
+        x = data_item[0,frame_id,:,m] * 1080
+        y = (data_item[1,frame_id,:,m] * 1080)
 
-# process the video and save as gif
-frame_list = []
-for t in range(T):
-    frame_item = demo_item[:, t, :]
-    frame_out = frame_visu(frame_item)
-    frame_list.append(frame_out)
-    # pdb.set_trace()
-    # plt.imshow(frame_out)
-    # plt.show()
-    cv2.imwrite(folder_path+str(t)+'.png', frame_out)
+        for v in range(V):
+            k = connecting_joint[v]
+            plt.plot([x[v],x[k]], [y[v],y[k]], '-o', c=(0.1,0.1,0.1), linewidth=0.5, markersize=0)
+        plt.scatter(x, y, marker='o', s=16)
+    #plt.show()
+    plt.savefig(out_path + str(t) + '.png')
+    plt.close()
 
 
 
+if __name__ == '__main__':
+    args = getArgs()
+    data_path = args['data_path']
+    out_path = args['out_path']
+    data_id = 3
+    data_item = data_loader(data_path, data_id)
+    C, T, V, M = data_item.shape
 
+    # process the data_item in each frame
+    # rm and mkdir
+    if os.path.exists(out_path):
+        shutil.rmtree(out_path)
+    os.makedirs(out_path)
+
+    for t in range(100):
+        data_visu(data_item, t, out_path)
 
 
