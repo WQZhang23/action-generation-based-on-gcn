@@ -38,7 +38,6 @@ class Feeder(torch.utils.data.Dataset):
                  random_choose=False,
                  random_move=False,
                  mask_size=10,
-                 start_portion=0.3,
                  window_size=-1,
                  debug=False,
                  mmap=True):
@@ -48,7 +47,6 @@ class Feeder(torch.utils.data.Dataset):
         self.random_choose = random_choose
         self.random_move = random_move
         self.mask_size = mask_size
-        self.start_portion = start_portion
         self.window_size = window_size
         self.load_data(mmap)
 
@@ -80,16 +78,18 @@ class Feeder(torch.utils.data.Dataset):
         # get data
         data_numpy = np.array(self.data[index])
         label = self.label[index]
+
+        data_filtered = data_numpy[:,:self.window_size,:,:]
         
         # processing
-        if self.random_choose:
-            data_numpy = tools.random_choose(data_numpy, self.window_size)
-        elif self.window_size > 0:
-            data_numpy = tools.auto_pading(data_numpy, self.window_size)
-        if self.random_move:
-            data_numpy = tools.random_move(data_numpy)
-        data_mask = tools.random_mask(data_numpy, self.start_portion, self.mask_size, self.window_size)
-        data_incom = data_numpy*(1-data_mask)
+        # if self.random_choose:
+        #     data_numpy = tools.random_choose(data_numpy, self.window_size)
+        # elif self.window_size > 0:
+        #     data_numpy = tools.auto_pading(data_numpy, self.window_size)
+        # if self.random_move:
+        #     data_numpy = tools.random_move(data_numpy)
+        data_mask = tools.random_mask(data_filtered, self.mask_size)
+        # data_incom = data_numpy*(1-data_mask)
         data_list = [data_numpy, data_mask]
 
         # return a list

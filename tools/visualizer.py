@@ -43,7 +43,7 @@ def data_visu(data_item, frame_id, out_path):
 
     plt.figure()
     plt.cla()
-    plt.xlim(-1000, 2000)
+    plt.xlim(-1500, 2000)
     plt.ylim(-2000, 2000)
     for m in range(M):
         x = data_item[0,frame_id,:,m] * 1080
@@ -63,7 +63,7 @@ if __name__ == '__main__':
     args = getArgs()
     data_path = args['data_path']
     out_path = args['out_path']
-    data_id = 3
+    data_id = 400
     data_item = data_loader(data_path, data_id)
     C, T, V, M = data_item.shape
 

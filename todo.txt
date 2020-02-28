@@ -60,4 +60,10 @@ paper writing
   - graph process the spatial and temporal data
   - gate conv. layer
 
+- data preprocessing
+  - feeder [feeder_generation.py; random_mask --> window_size]
+  - feeder [len of the active (non-zero) data; ]
+
+
 python main.py generation -c config/st_gcn/kinetics-skeleton/generation_train.yaml
+sudo docker run -ti --gpus '"device=0"' --shm-size=8192m -v ~/Workspace:/home/wuqiang/Workspace gcn:v1

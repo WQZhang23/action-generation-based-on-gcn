@@ -53,11 +53,11 @@ def random_choose(data_numpy, size, auto_pad=True):
         begin = random.randint(0, T - size)
         return data_numpy[:, begin:begin + size, :, :]
 
-def random_mask(data_numpy, start_portion, mask_size, window_size):
+def random_mask(data_numpy, mask_size):
     # input: C,T,V,M
     C, T, V, M = data_numpy.shape
-    random_start = int(T*start_portion)
-    random_end = (window_size-mask_size)
+    random_start = 0
+    random_end = (T - mask_size)
     assert random_start < random_end
     begin = random.randint(random_start, random_end)
     mask = np.zeros((1,T,V,M), np.float32)
