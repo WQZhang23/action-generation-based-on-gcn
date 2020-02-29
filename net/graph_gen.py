@@ -98,10 +98,12 @@ class Generator(nn.Module):
         # stage 1 forward
         for gcn, importance in zip(self.gen_stage1, self.edge_importance_stage1):
             x, _ = gcn(x, self.A * importance)
+            # pdb.set_trace()
         x_stage1 = self.tanh(x)
 
 
         # stage 2 forward
+
         x = x_stage1*mask + x_ori*(1-mask)
         x = x.float()
 

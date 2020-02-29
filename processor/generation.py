@@ -211,11 +211,10 @@ class GEN_Processor(Processor):
 
     def test(self, evaluation=True):
 
-        self.model.eval()
+        # self.model.eval()
         loader = self.data_loader['test']
-        loss_value = []
-        result_frag = []
-        label_frag = []
+
+        out_data_seq_list = []
 
         for data_list, label in loader:
             
@@ -224,29 +223,60 @@ class GEN_Processor(Processor):
             data_mask = data_list[1]
 
             data = data.float().to(self.dev)
-            data_mask = data_mask.int().to(self.dev)
+            data_mask = data_mask.float().to(self.dev)
             label = label.long().to(self.dev)
 
             # inference
-            with torch.no_grad():
-                output = self.model(data, data_mask)
-            result_frag.append(output.data.cpu().numpy())
+            x_stage1, x_stage2 = self.generator(data, data_mask)
+            x_com = x_stage2 * data_mask + data * (1 - data_mask)
+            # pdb.set_trace()
+            np_data = data.cpu().numpy()
+            np_data_mask = data_mask.cpu().numpy()
+            np_x_com = x_com.cpu().detach().numpy()
 
-            # get loss
-            if evaluation:
-                loss = self.loss(output, label)
-                loss_value.append(loss.item())
-                label_frag.append(label.data.cpu().numpy())
+            # shape [1,7,64(len_data),25(keypoints),2(person)]
+            # axis=1 --> 7
+            # [0:3]--> original data  [3]--> mask    [4:]--> generated data
+            out_data_item = np.concatenate((np_data,np_data_mask,np_x_com), axis=1)
 
-        self.result = np.concatenate(result_frag)
-        if evaluation:
-            self.label = np.concatenate(label_frag)
-            self.epoch_info['mean_loss']= np.mean(loss_value)
-            self.show_epoch_info()
 
-            # show top-k accuracy
-            for k in self.arg.show_topk:
-                self.show_topk(k)
+            # out_data_seq
+            # TODO : check if the list can be saved
+            out_data_seq_list.append(out_data_item)
+
+        # transfer list to numpy array
+        N, C, L, K, M = out_data_seq_list[0].shape
+        out_data_seq_np = np.zeros((0, C, L, K, M))
+        for item in out_data_seq_list:
+            out_data_seq_np = np.concatenate((out_data_seq_np, item), axis=0)
+        # shape [N,7,len_data, num_keypoints, num_person]
+        np.save('{}/inference_data.npy'.format(self.arg.work_dir), out_data_seq_np)
+
+
+
+
+
+            # save the data, x_com, data_mask as numpy data
+
+            # with torch.no_grad():
+            #     output = self.model(data, data_mask)
+            # result_frag.append(output.data.cpu().numpy())
+
+        #     # get loss
+        #     if evaluation:
+        #         loss = self.loss(output, label)
+        #         loss_value.append(loss.item())
+        #         label_frag.append(label.data.cpu().numpy())
+        #
+        # self.result = np.concatenate(result_frag)
+        # if evaluation:
+        #     self.label = np.concatenate(label_frag)
+        #     self.epoch_info['mean_loss']= np.mean(loss_value)
+        #     self.show_epoch_info()
+        #
+        #     # show top-k accuracy
+        #     for k in self.arg.show_topk:
+        #         self.show_topk(k)
 
     @staticmethod
     def get_parser(add_help=False):

@@ -4,14 +4,18 @@ work_dir: ./work_dir/recognition/kinetics_skeleton/ST_GCN
 feeder: feeder.feeder_generation.Feeder
 train_feeder_args:
   mask_size: 5
-  window_size: 64
-  data_path: /home/wuqiang/Workspace/2_generative_model/3_DA_Gesture/2_ST_GCN/st-gcn-master/data/NTU-RGB-D/xsub/train_data.npy
-  label_path: /home/wuqiang/Workspace/2_generative_model/3_DA_Gesture/2_ST_GCN/st-gcn-master/data/NTU-RGB-D/xsub/train_label.pkl
-  debug: True
+  window_size: 50
+  num_data: 10000
+  data_path: /data/NTU-RGB-D/xsub/train_data.npy
+  label_path: /data/NTU-RGB-D/xsub/train_label.pkl
+  debug: False
 test_feeder_args:
-  data_path: /home/wuqiang/Workspace/2_generative_model/3_DA_Gesture/2_ST_GCN/st-gcn-master/data/NTU-RGB-D/xsub/val_data.npy
-  label_path: /home/wuqiang/Workspace/2_generative_model/3_DA_Gesture/2_ST_GCN/st-gcn-master/data/NTU-RGB-D/xsub/val_label.pkl
-  debug: True
+  data_path: /data/NTU-RGB-D/xsub/val_data.npy
+  label_path: /data/NTU-RGB-D/xsub/val_label.pkl
+  mask_size: 5
+  window_size: 50
+  num_data: 1000
+  debug: False
 
 # model
 generator: net.graph_gen.Generator
@@ -34,18 +38,15 @@ dis_args:
 
 # training
 # original batch_size = 256
-device: [0]
-batch_size: 1
-test_batch_size: 1
+device: [0,1,2,3]
+batch_size: 4
+test_batch_size: 4
 
 #optim
 base_lr: 0.1
 optimizer: 'Adam'
 step: [20, 30, 40, 50]
 num_epoch: 50
-
-#loss function
-recon_loss_weight: 1
 
 
 

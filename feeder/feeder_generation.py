@@ -37,6 +37,7 @@ class Feeder(torch.utils.data.Dataset):
                  label_path,
                  random_choose=False,
                  random_move=False,
+                 num_data=50000,
                  mask_size=10,
                  window_size=-1,
                  debug=False,
@@ -46,6 +47,7 @@ class Feeder(torch.utils.data.Dataset):
         self.label_path = label_path
         self.random_choose = random_choose
         self.random_move = random_move
+        self.num_data = num_data
         self.mask_size = mask_size
         self.window_size = window_size
         self.load_data(mmap)
@@ -62,11 +64,23 @@ class Feeder(torch.utils.data.Dataset):
             self.data = np.load(self.data_path, mmap_mode='r')
         else:
             self.data = np.load(self.data_path)
-            
+
+        # self.label = self.label[0:self.num_data]
+        # self.data = self.data[0:self.num_data]
+        # self.sample_name = self.sample_name[0:self.num_data]
+
+        N, C, T, V, M = self.data.shape
+        if self.num_data < N:
+            self.label = self.label[0:self.num_data]
+            self.data = self.data[0:self.num_data]
+            self.sample_name = self.sample_name[0:self.num_data]
+
         if self.debug:
             self.label = self.label[0:100]
             self.data = self.data[0:100]
             self.sample_name = self.sample_name[0:100]
+
+        self.data = self.data[:, :, :self.window_size, :, :]
 
         self.N, self.C, self.T, self.V, self.M = self.data.shape
 
@@ -79,7 +93,7 @@ class Feeder(torch.utils.data.Dataset):
         data_numpy = np.array(self.data[index])
         label = self.label[index]
 
-        data_filtered = data_numpy[:,:self.window_size,:,:]
+        # data_filtered = data_numpy[:,:self.window_size,:,:]
         
         # processing
         # if self.random_choose:
@@ -88,7 +102,7 @@ class Feeder(torch.utils.data.Dataset):
         #     data_numpy = tools.auto_pading(data_numpy, self.window_size)
         # if self.random_move:
         #     data_numpy = tools.random_move(data_numpy)
-        data_mask = tools.random_mask(data_filtered, self.mask_size)
+        data_mask = tools.random_mask(data_numpy, self.mask_size)
         # data_incom = data_numpy*(1-data_mask)
         data_list = [data_numpy, data_mask]
 

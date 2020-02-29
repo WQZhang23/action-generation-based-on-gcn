@@ -66,4 +66,6 @@ paper writing
 
 
 python main.py generation -c config/st_gcn/kinetics-skeleton/generation_train.yaml
+python main.py generation -c config/st_gcn/ntu-xsub/generation_train_local.yaml
 sudo docker run -ti --gpus '"device=0"' --shm-size=8192m -v ~/Workspace:/home/wuqiang/Workspace gcn:v1
+sudo docker run -ti --gpus '"device=0,1,2,3"' --shm-size=8192m -v /home/wuqiang/link_dataset/data/:/data/ -v /home/wuqiang/Workspace/4_generative_model/2_DA_Gesture:/code/ gcn:v1

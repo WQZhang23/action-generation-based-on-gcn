@@ -1,17 +1,15 @@
+weights: ./work_dir/recognition/kinetics_skeleton/ST_GCN/epoch40_generator.pt
 work_dir: ./work_dir/recognition/kinetics_skeleton/ST_GCN
 
 # feeder
 feeder: feeder.feeder_generation.Feeder
-train_feeder_args:
-  mask_size: 5
-  window_size: 64
-  data_path: /home/wuqiang/Workspace/2_generative_model/3_DA_Gesture/2_ST_GCN/st-gcn-master/data/NTU-RGB-D/xsub/train_data.npy
-  label_path: /home/wuqiang/Workspace/2_generative_model/3_DA_Gesture/2_ST_GCN/st-gcn-master/data/NTU-RGB-D/xsub/train_label.pkl
-  debug: True
 test_feeder_args:
   data_path: /home/wuqiang/Workspace/2_generative_model/3_DA_Gesture/2_ST_GCN/st-gcn-master/data/NTU-RGB-D/xsub/val_data.npy
   label_path: /home/wuqiang/Workspace/2_generative_model/3_DA_Gesture/2_ST_GCN/st-gcn-master/data/NTU-RGB-D/xsub/val_label.pkl
-  debug: True
+  mask_size: 5
+  window_size: 64
+  num_data: 100
+  debug: False
 
 # model
 generator: net.graph_gen.Generator
@@ -32,20 +30,11 @@ dis_args:
     layout: 'ntu-rgb+d'
     strategy: 'spatial'
 
-# training
+# test
 # original batch_size = 256
+phase: test
 device: [0]
-batch_size: 1
 test_batch_size: 1
-
-#optim
-base_lr: 0.1
-optimizer: 'Adam'
-step: [20, 30, 40, 50]
-num_epoch: 50
-
-#loss function
-recon_loss_weight: 1
 
 
 
