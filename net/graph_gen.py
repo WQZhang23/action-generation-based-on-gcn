@@ -458,7 +458,8 @@ class st_gen_conv(nn.Module):
         x = self.relu(part1)
         y = self.sig(part2)
         #pdb.set_trace()
-        x = x * y
+        # TODO: comment the next line [x = x*y], have not use the mask information
+        # x = x * y
 
         return x, A
 
@@ -531,6 +532,7 @@ class st_gen_deconv(nn.Module):
         x = self.relu(part1)
         y = self.sig(part2)
 
-        x = x * y
+        # TODO: comment the next line [x = x*y], have not use the mask information
+        # x = x * y
 
         return x, A

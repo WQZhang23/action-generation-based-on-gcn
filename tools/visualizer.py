@@ -9,7 +9,8 @@ import shutil
 # finish the ntu
 def getArgs():
     parse = argparse.ArgumentParser()
-    parse.add_argument('--data_path', type=str, help='the input data', default='//home/wuqiang/Workspace/2_generative_model/3_DA_Gesture/2_ST_GCN/st-gcn-master/data/NTU-RGB-D/xsub/val_data.npy')
+    parse.add_argument('--mode', type=str, help='ori or test', default='ori')
+    parse.add_argument('--data_path', type=str, help='the input data', default='/home/wuqiang/Workspace/2_generative_model/3_DA_Gesture/2_ST_GCN/st-gcn-master/data/NTU-RGB-D/xsub/val_data.npy')
     parse.add_argument('--data_layout', type=str, help='openpose, ntu-rgb+d, ntu_edge', default='openpose')
     parse.add_argument('--out_path', type=str, help='the path where the result will be saved', default='./videos/')
     args = parse.parse_args()
@@ -63,7 +64,8 @@ if __name__ == '__main__':
     args = getArgs()
     data_path = args['data_path']
     out_path = args['out_path']
-    data_id = 400
+    mode = args['mode']
+    data_id = 1
     data_item = data_loader(data_path, data_id)
     C, T, V, M = data_item.shape
 
@@ -73,7 +75,27 @@ if __name__ == '__main__':
         shutil.rmtree(out_path)
     os.makedirs(out_path)
 
-    for t in range(100):
-        data_visu(data_item, t, out_path)
+    if mode == 'ori':
+        if os.path.exists(out_path):
+            shutil.rmtree(out_path)
+        os.makedirs(out_path)
+
+        for t in range(100):
+            data_visu(data_item, t, out_path)
+
+    if mode == 'test':
+        if os.path.exists(out_path+'ori/'):
+            shutil.rmtree(out_path+'ori/')
+        os.makedirs(out_path+'ori/')
+
+        if os.path.exists(out_path+'gen/'):
+            shutil.rmtree(out_path+'gen/')
+        os.makedirs(out_path+'gen/')
+
+        data_ori = data_item[:3,:,:,:]
+        data_gen = data_item[4:,:,:,:]
+        for t in range(64):
+            data_visu(data_ori, t, out_path+'ori/')
+            data_visu(data_gen, t, out_path+'gen/')
 
 
