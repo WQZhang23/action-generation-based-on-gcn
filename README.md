@@ -2,9 +2,7 @@
 
 ## Introduction
 This repository is the implementation of the idea:
-skeleton-based-action data generation based on ST-GCN.
-
-Please refer to [MMSkeleton](https://github.com/open-mmlab/mmskeleton) for the original repo of ST-GCN.
+skeleton-based-action data GENERATION based on ST-GCN.
 
 ## Prerequisites
 - Python3 (>3.5)
@@ -40,3 +38,6 @@ python main.py generative -c config/st_gcn//ntu-xsub/test_local.yaml
 ## Visualization of the action data
 
 By running the `./tools/NTU_visu.ipynb` the skeleton based action data could be visualized.
+
+## Reference
+This repo is based on the skeleton-based action recognition, [MMSkeleton](https://github.com/open-mmlab/mmskeleton).
