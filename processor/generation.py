@@ -301,3 +301,7 @@ class GEN_Processor(Processor):
         # endregion yapf: enable
 
         return parser
+
+
+### TODO: rename the GEN_Processor --> GEN_gcn_base_pro
+### TODO: inherit the GEN_gcn_base_pro --> GEN_gcn_attention_pro

@@ -32,7 +32,7 @@ The training parameters such as ```work_dir```, ```batch_size```, ```step```, ``
 Use the pretrained generative model to generate action data by running
 
 ```
-python main.py generative -c config/st_gcn//ntu-xsub/test_local.yaml
+python main.py generation -c config/st_gcn//ntu-xsub/test_local.yaml
 ```
 
 ## Visualization of the action data
