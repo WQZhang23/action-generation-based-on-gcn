@@ -34,7 +34,7 @@ def weights_init(m):
         m.weight.data.normal_(1.0, 0.02)
         m.bias.data.fill_(0)
 
-class GEN_Processor(Processor):
+class GEN_gcn_base_Processor(Processor):
     """
         Processor for Graph data generation
     """
@@ -169,46 +169,6 @@ class GEN_Processor(Processor):
         self.show_epoch_info()
         #self.io.print_timer()
 
-
-
-    # def train(self):
-    #     self.model.train()
-    #     self.adjust_lr()
-    #     loader = self.data_loader['train']
-    #     loss_value = []
-    #
-    #     for data_list, label in loader:
-    #
-    #         # get data
-    #         data = data_list[0]
-    #         data_mask = data_list[1]
-    #
-    #         data = data.float().to(self.dev)
-    #         data_mask = data_mask.int().to(self.dev)
-    #         label = label.long().to(self.dev)
-    #
-    #         # forward
-    #         output = self.model(data, data_mask)
-    #         loss = self.loss(output, label)
-    #
-    #         # backward
-    #         self.optimizer.zero_grad()
-    #         loss.backward()
-    #         self.optimizer.step()
-    #
-    #         # statistics
-    #         self.iter_info['loss'] = loss.data.item()
-    #         self.iter_info['lr'] = '{:.6f}'.format(self.lr)
-    #         loss_value.append(self.iter_info['loss'])
-    #         self.show_iter_info()
-    #         self.meta_info['iter'] += 1
-    #
-    #     self.epoch_info['mean_loss']= np.mean(loss_value)
-    #     self.show_epoch_info()
-    #     self.io.print_timer()
-
-
-
     def test(self, evaluation=True):
 
         # self.model.eval()
@@ -253,31 +213,6 @@ class GEN_Processor(Processor):
         np.save('{}/inference_data.npy'.format(self.arg.work_dir), out_data_seq_np)
 
 
-
-
-
-            # save the data, x_com, data_mask as numpy data
-
-            # with torch.no_grad():
-            #     output = self.model(data, data_mask)
-            # result_frag.append(output.data.cpu().numpy())
-
-        #     # get loss
-        #     if evaluation:
-        #         loss = self.loss(output, label)
-        #         loss_value.append(loss.item())
-        #         label_frag.append(label.data.cpu().numpy())
-        #
-        # self.result = np.concatenate(result_frag)
-        # if evaluation:
-        #     self.label = np.concatenate(label_frag)
-        #     self.epoch_info['mean_loss']= np.mean(loss_value)
-        #     self.show_epoch_info()
-        #
-        #     # show top-k accuracy
-        #     for k in self.arg.show_topk:
-        #         self.show_topk(k)
-
     @staticmethod
     def get_parser(add_help=False):
 
@@ -302,6 +237,8 @@ class GEN_Processor(Processor):
 
         return parser
 
+class GEN_gcn_attention_Processor(GEN_gcn_base_Processor):
+    pass
 
 ### TODO: rename the GEN_Processor --> GEN_gcn_base_pro
 ### TODO: inherit the GEN_gcn_base_pro --> GEN_gcn_attention_pro

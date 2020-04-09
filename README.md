@@ -18,11 +18,18 @@ The data generation experiment are implemented based on the NTU RGB+D.
 The pre-processed data is available by [MMSkeleton] (https://github.com/open-mmlab/mmskeleton).
 
 ## Training
-To train the generative model, run
+To train the generative model, 
 
+a) GCN base model
 ```
-python main.py generation -c config/st_gcn/ntu-xsub/generation_train_local.yaml
+python main.py generation_gcn -c config/st_gcn/ntu-xsub/generation_train_local.yaml
 ```
+
+b) GCN attention model
+```
+python main.py generation_attention -c config/st_gcn/ntu-xsub/generation_train_local.yaml
+```
+
 
 Configurations and logging files, will be saved under the `./work_dir` by default or `<work folder>` if you appoint it.
 
@@ -30,9 +37,14 @@ The training parameters such as ```work_dir```, ```batch_size```, ```step```, ``
 
 ## Inference
 Use the pretrained generative model to generate action data by running
-
+a) GCN base model
 ```
-python main.py generation -c config/st_gcn//ntu-xsub/test_local.yaml
+python main.py generation_gcn -c config/st_gcn//ntu-xsub/test_local.yaml
+```
+
+b) GCN attention model
+```
+python main.py generation_attention -c config/st_gcn//ntu-xsub/test_local.yaml
 ```
 
 ## Visualization of the action data
