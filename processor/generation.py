@@ -59,9 +59,45 @@ class GEN_gcn_base_Processor(Processor):
         self.relu = nn.ReLU()
         hinge_pos = self.relu(1-pos).mean()
         hinge_neg = self.relu(1+neg).mean()
-        d_loss = .5*hinge_pos + .5*hinge_neg
+        d_loss = hinge_pos + hinge_neg
         g_loss = -neg.mean()
         return g_loss, d_loss
+
+    def gan_kl_loss(self, pos, neg):
+        self.softplus = nn.functional.softplus()
+        kl_pos = self.softplus(-pos).mean()
+        kl_neg = self.softplus(neg).mean()
+        d_loss = kl_pos + kl_neg
+        g_loss = -neg.mean()
+        return g_loss, d_loss
+
+    def gan_wgan_gp_loss(self, pos, neg, data, gen_sample):
+        # https://github.com/arturml/pytorch-wgan-gp/blob/master/wgangp.py
+        epsilon = torch.rand(self.arg.batch_size, 1, 1, 1).to(self.dev)
+        interpolation = epsilon*data + (1-epsilon)*gen_sample
+        interpolation = torch.autograd.Variable(interpolation, requires_grad=True)
+        interpolation.to(self.dev)
+        interpolation_logits = self.discriminator(interpolation)
+        grad_outputs = torch.ones(interpolation_logits.size())
+
+        gradients = torch.autograd.grad(
+            outputs=interpolation_logits,
+            inputs=interpolation,
+            grad_outputs=grad_outputs,
+            create_graph=True,
+            retain_graph=True
+        )[0]
+
+        gradients = gradients.view(self.arg.batch_size, -1)
+        gradients_norm = torch.sqrt(torch.sum(gradients ** 2, dim=1) + 1e-12)
+
+        gradient_penalty = ((gradients_norm - 1) ** 2).mean()
+
+        d_loss = neg.mean() - pos.mean() + 10*gradient_penalty
+        g_loss = -neg.mean()
+        return g_loss, d_loss
+
+
         
     def load_optimizer(self):
         if self.arg.optimizer == 'SGD':
@@ -141,7 +177,15 @@ class GEN_gcn_base_Processor(Processor):
             dis_pos = dis_pos_neg[:,0]
             dis_neg = dis_pos_neg[:,1]
 
-            g_gan_loss, d_gan_loss = self.gan_hinge_loss(dis_pos, dis_neg)
+            # TODO: define the gan_loss_type, define it in the args
+            if self.arg.gan_loss_type == 'hinge':
+                g_gan_loss, d_gan_loss = self.gan_hinge_loss(dis_pos, dis_neg)
+            elif self.arg.gan_loss_type == 'kl':
+                g_gan_loss, d_gan_loss = self.gan_kl_loss(dis_pos, dis_neg)
+
+            elif self.arg.gan_loss_type == 'wgan_gp':
+                g_gan_loss, d_gan_loss = self.gan_wgan_gp_loss(dis_pos, dis_neg, data, x_com)
+
             g_loss_sum = self.arg.recon_loss_weight*gen_recon_loss + g_gan_loss
             d_loss_sum = d_gan_loss
 
@@ -233,6 +277,8 @@ class GEN_gcn_base_Processor(Processor):
         parser.add_argument('--nesterov', type=str2bool, default=True, help='use nesterov or not')
         parser.add_argument('--weight_decay', type=float, default=0.0001, help='weight decay for optimizer')
         parser.add_argument('--recon_loss_weight', type=int, default=1, help='lambda for reconstuction loss')
+        parser.add_argument('--gan_loss_type', default='hinge', help='different type of gan loss, could be hinge, kl, wgan_gp')
+        parser.add_argument('--batch_size', type=int, default=256, help='training batch size')
         # endregion yapf: enable
 
         return parser

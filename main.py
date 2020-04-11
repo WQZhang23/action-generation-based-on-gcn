@@ -14,8 +14,6 @@ if __name__ == '__main__':
     processors = dict()
     processors['generation_gcn'] = import_class('processor.generation.GEN_gcn_base_Processor')
     processors['generation_attention'] = import_class('processor.generation.GEN_gcn_attention_Processor')
-    #TODO: rename the processors['generation'] --> processors['generation_gcn']  ; import_class change the name
-    #TODO: add the processors['generation_gcn_attention']
 
     # TODO: next big step --> add the args of different similarity
 

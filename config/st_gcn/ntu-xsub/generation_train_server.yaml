@@ -36,6 +36,7 @@ dis_args:
     layout: 'ntu-rgb+d'
     strategy: 'spatial'
 
+gan_loss_type: 'hinge'
 # training
 # original batch_size = 256
 device: [0,1,2,3]
