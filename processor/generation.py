@@ -51,6 +51,7 @@ class GEN_gcn_base_Processor(Processor):
         self.l1_loss = nn.L1Loss()
         self.sml1_loss = nn.SmoothL1Loss()
         self.ce_loss = nn.CrossEntropyLoss()
+        self.l2_loss = nn.MSELoss()
 
     # definition of the gan loss
     # https://github.com/JiahuiYu/neuralgym/blob/master/neuralgym/ops/gan_ops.py
@@ -71,14 +72,21 @@ class GEN_gcn_base_Processor(Processor):
         g_loss = -neg.mean()
         return g_loss, d_loss
 
+    def gan_ls_loss(self, pos, neg):
+        ls_pos = self.l2_loss(pos, torch.ones_like(pos, device=self.dev)).mean()
+        ls_neg = self.l2_loss(neg, torch.zeros_like(neg, device=self.dev)).mean()
+        d_loss = 0.5*ls_pos + 0.5*ls_neg
+        g_loss = self.l2_loss(neg, torch.ones_like(neg, device=self.dev)).mean()
+        return g_loss, d_loss
+
     def gan_wgan_gp_loss(self, pos, neg, data, gen_sample):
         # https://github.com/arturml/pytorch-wgan-gp/blob/master/wgangp.py
-        epsilon = torch.rand(self.arg.batch_size, 1, 1, 1).to(self.dev)
+        epsilon = torch.rand(self.arg.batch_size, 1, 1, 1, 1).to(self.dev)
         interpolation = epsilon*data + (1-epsilon)*gen_sample
         interpolation = torch.autograd.Variable(interpolation, requires_grad=True)
         interpolation.to(self.dev)
         interpolation_logits = self.discriminator(interpolation)
-        grad_outputs = torch.ones(interpolation_logits.size())
+        grad_outputs = torch.ones(interpolation_logits.size()).to(self.dev)
 
         gradients = torch.autograd.grad(
             outputs=interpolation_logits,
@@ -87,13 +95,12 @@ class GEN_gcn_base_Processor(Processor):
             create_graph=True,
             retain_graph=True
         )[0]
-
         gradients = gradients.view(self.arg.batch_size, -1)
         gradients_norm = torch.sqrt(torch.sum(gradients ** 2, dim=1) + 1e-12)
 
         gradient_penalty = ((gradients_norm - 1) ** 2).mean()
 
-        d_loss = neg.mean() - pos.mean() + 10*gradient_penalty
+        d_loss = neg.mean() - pos.mean() + 1*gradient_penalty
         g_loss = -neg.mean()
         return g_loss, d_loss
 
@@ -185,6 +192,9 @@ class GEN_gcn_base_Processor(Processor):
 
             elif self.arg.gan_loss_type == 'wgan_gp':
                 g_gan_loss, d_gan_loss = self.gan_wgan_gp_loss(dis_pos, dis_neg, data, x_com)
+
+            elif self.arg.gan_loss_type == 'ls':
+                g_gan_loss, d_gan_loss = self.gan_ls_loss(dis_pos, dis_neg)
 
             g_loss_sum = self.arg.recon_loss_weight*gen_recon_loss + g_gan_loss
             d_loss_sum = d_gan_loss
@@ -278,7 +288,7 @@ class GEN_gcn_base_Processor(Processor):
         parser.add_argument('--weight_decay', type=float, default=0.0001, help='weight decay for optimizer')
         parser.add_argument('--recon_loss_weight', type=int, default=1, help='lambda for reconstuction loss')
         parser.add_argument('--gan_loss_type', default='hinge', help='different type of gan loss, could be hinge, kl, wgan_gp')
-        parser.add_argument('--batch_size', type=int, default=256, help='training batch size')
+        #parser.add_argument('--batch_size', type=int, default=256, help='training batch size')
         # endregion yapf: enable
 
         return parser
