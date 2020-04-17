@@ -9,7 +9,7 @@ model/*
 *.pt
 *.caffemodel
 cache/
-tools/videos
+tools/visu/videos
 .ipynb_checkpoints/*
 
 # Byte-compiled / optimized / DLL files
