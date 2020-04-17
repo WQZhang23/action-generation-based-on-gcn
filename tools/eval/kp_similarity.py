@@ -35,4 +35,5 @@ if __name__ == '__main__':
         loss_list.append(item_loss)
 
     loss_mean = np.mean(loss_list)
-    print(loss_mean, itemer.len_incom)
+    print('distance per frame between gt and pre:', loss_mean)
+    print('the length of the mask:', itemer.len_incom)
