@@ -1,0 +1,53 @@
+work_dir: /workdir/generation/ntu-xsub/hinge_loss_w_100_sgd
+
+# feeder
+feeder: feeder.feeder_generation.Feeder
+train_feeder_args:
+  mask_size: 5
+  window_size: 64
+  num_data: 10000
+  data_path: /data/NTU-RGB-D/xsub/train_data.npy
+  label_path: /data/NTU-RGB-D/xsub/train_label.pkl
+  debug: False
+test_feeder_args:
+  data_path: /data/NTU-RGB-D/xsub/val_data.npy
+  label_path: /data/NTU-RGB-D/xsub/val_label.pkl
+  mask_size: 5
+  window_size: 64
+  num_data: 1000
+  debug: False
+
+# model
+generator: net.graph_gen.Generator
+gen_args:
+  in_channels: 3
+  num_class: 400
+  edge_importance_weighting: True
+  graph_args:
+    layout: 'ntu-rgb+d'
+    strategy: 'spatial'
+
+discriminator: net.graph_gen.Discriminator
+dis_args:
+  in_channels: 3
+  num_class: 400
+  edge_importance_weighting: True
+  graph_args:
+    layout: 'ntu-rgb+d'
+    strategy: 'spatial'
+
+# training
+# original batch_size = 256
+device: [0,1,2,3]
+batch_size: 4
+test_batch_size: 4
+
+#optim
+base_lr: 0.0001
+optimizer: 'SGD'
+step: [20, 30, 40]
+num_epoch: 50
+
+#loss function
+recon_loss_weight: 100
+gan_loss_type: 'hinge'
