@@ -1,0 +1,1 @@
+sudo docker run -ti --gpus '"device=0,1,2,3"' --shm-size=8192m -v /lake_poyang/Dataset/gcn_dataset/data:/data -v /home/wuqiang/SHARE_DIR/action-generation-based-on-gcn:/code -v /home/wuqiang/Workspace/project-code/generative-models/1_VUNet/workdir/:/workdir pytorch:gcn

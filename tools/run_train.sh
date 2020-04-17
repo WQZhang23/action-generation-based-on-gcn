@@ -1,0 +1,1 @@
+nohup python -u main.py generation_gcn -c config/st_gcn/ntu-xsub/generation_train_server_baseline.yaml

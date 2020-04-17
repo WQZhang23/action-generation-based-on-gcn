@@ -1,4 +1,4 @@
-work_dir: ./work_dir/generation/ntu-xsub/hinge_loss_w_100_sgd
+work_dir: /workdir/generation/ntu-xsub/hinge_loss_w_100_sgd
 
 # feeder
 feeder: feeder.feeder_generation.Feeder
