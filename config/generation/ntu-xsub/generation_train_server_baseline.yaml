@@ -5,7 +5,7 @@ feeder: feeder.feeder_generation.Feeder
 train_feeder_args:
   mask_size: 5
   window_size: 64
-  num_data: 10000
+  num_data: 40091
   data_path: /data/NTU-RGB-D/xsub/train_data.npy
   label_path: /data/NTU-RGB-D/xsub/train_label.pkl
   debug: False
@@ -14,7 +14,7 @@ test_feeder_args:
   label_path: /data/NTU-RGB-D/xsub/val_label.pkl
   mask_size: 5
   window_size: 64
-  num_data: 1000
+  num_data: 8000
   debug: False
 
 # model
@@ -39,7 +39,7 @@ dis_args:
 # training
 # original batch_size = 256
 device: [0,1,2,3]
-batch_size: 4
+batch_size: 256
 test_batch_size: 4
 
 #optim
