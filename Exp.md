@@ -7,6 +7,24 @@
 |---|---|---|---|---|
 |Num_Data| 40091 | 16487 | 37646 | 18932 |
 
+## TODO
+1. Attention
+
+   config.yaml, generation.py, graph_gen.py 
+   ```
+   [spatial_attention = edge importance] {'on', 'off'}
+   [tem_attention] {'off', 'importance', 'similarity'}
+                   ['importance' -- An End-to-End Spatio-Temporal Attention Model (4.2)]
+                   ['similarity' -- Generative Image Inpainting with Contextual Attention (4.1)]
+   ```
+   ```
+   score = g(feature[x,t])
+     where,
+     [g -- function, could be importance, similarity ...]
+     [feature --> extracted by several layers]
+   ```
+
+
 ## Prerequisites
 - Python3 (>3.5)
 - [PyTorch](http://pytorch.org/)
